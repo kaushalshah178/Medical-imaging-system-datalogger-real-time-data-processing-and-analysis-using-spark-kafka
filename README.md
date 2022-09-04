@@ -58,18 +58,20 @@ sortedTemp = avgTempByState.transform(lambda x: x.sortBy(lambda y: y[1], False))
 #WY,55.5
 #CA,60.65
 ```
+
 {
-    "guid": "0-ZZZ12345678-08K",#sensor id
-    "destination": "0-AAA12345678",#destination id
-    "state": "CA", #US State name code
-    "eventTime": "2016-11-16T13:26:39.447974Z", 
-    "payload": {
-        "format": "urn:example:sensor:temp", 
+    "guid":"0-ZZZ12345678-02X",
+    "destination":"0-AAA12345678",
+    "medicalimagingdevice":"PETCT10",
+    "eventTime":"2022-07-30T11:45:09.235754Z",
+    "payload":{
+        "format":"urn:example:sensor:humidity",
         "data":{
-            "temperature": 59.7
-        }
+            "humidity":58.2
+            }
     }
 }
+
 - In the first ```.map``` operation, PySpark creates pair RDDs (k, v) where _k_ is a values of a fileld ```state```, and _v_ is a value of a field ```temperature``` with a count of 1
 
 ```
@@ -385,18 +387,18 @@ Total number of sensors: 2086
 
 ## Step 1 - creating kafka topic
 ```
-/usr/hdp/current/kafka-broker/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic iotanalytics2
+/usr/hdp/current/kafka-broker/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic humidityanalytics
 checking topic is created 
 /usr/hdp/current/kafka-broker/bin/kafka-topics.sh --list --zookeeper localhost:2181
 ```
 ## Step 2 - Starting spark shell
 ```
-pyspark --jars /root/IoT-Data-Processing-and-Analytics/spark-streaming-kafka-0-8-assembly_2.11-2.4.7.jar
+pyspark --jars /root/medical/spark-streaming-kafka-0-8-assembly_2.11-2.4.7.jar
 Run the spark code [kafka-direct-iotmsg.py]
 ```
 ## Step 3 - Sending sensor data to kafka using console producer
 ```
-/usr/hdp/current/kafka-broker/bin/kafka-console-producer.sh --broker-list 172.18.0.2:6667 --topic iotanalytics2 < testdata.txt
+/usr/hdp/current/kafka-broker/bin/kafka-console-producer.sh --broker-list 172.18.0.2:6667 --topic humidityanalytics < midata.txt
 ```
 
 
