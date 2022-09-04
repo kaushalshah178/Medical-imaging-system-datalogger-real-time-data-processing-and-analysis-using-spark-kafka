@@ -5,11 +5,11 @@
 
 # 1. Overview
 ## Usecase
-- Analyzing temperature from IoT sensors in real-time humidity from data loggers in real time 
+- Analyzing humidity from data loggers in real time to prevent major damage to critical medical imaging devices.(MRI, CT-SCAN, PETCT, SPECT)
 
 ## Project scenario
-- Multiple temperature sensors are deployed in multiple district
-- Each sensor regularly sends temperature data to a Kafka server in HortonWorks  
+- Multiple dataloggers(hymidity sensors) are deployed in multiple medical imaging centers and hospitals
+- Each data logger regularly sends humidity data to a Kafka server in HortonWorks  
 - Kafka client retrieves the streaming data every 3 seconds
 - PySpark processes and analyzes them in real-time by using Spark Streaming, and show the results
 
@@ -18,20 +18,20 @@
 - Apache Kafka
 - Python/PySpark
 
-# 2. Format of sensor data
+# 2. Format of datalogger(humidity sensor) data
 
-## Example- The data come from temprature sensor in form of json
+## Example- The data come from humidity sensor in form of json
 
 ```
 {
-    "guid": "0-ZZZ12345678-08K",#sensor id
+    "guid": "0-ZZZ12345678-08K",#datalogger humidity sensor id
     "destination": "0-AAA12345678",#destination id
-    "state": "CA", #US State name code
-    "eventTime": "2016-11-16T13:26:39.447974Z", 
+    "medicalImagingdevice": "MRI 12", # medical imaging device id which is located at imaging center or hospital
+    "eventTime": "2022-08-16T13:26:39.447974Z", 
     "payload": {
-        "format": "urn:example:sensor:temp", 
+        "format": "urn:example:sensor:humidity", 
         "data":{
-            "temperature": 59.7
+            "humidity": 71.7
         }
     }
 }
@@ -46,7 +46,7 @@ In this project, I achieved 4 types of real-time analysis.
 (iv) Total number of sensors
 
 ```
-## (i) Average temperature by each state (Values sorted in descending order)
+## (i) Average humidity by each medicalImagingdevice (Values sorted in descending order)
 
 ```python
 avgTempByState = jsonRDD.map(lambda x: (x['state'], (x['payload']['data']['temperature'], 1))) \ #CA,59.7,1 
