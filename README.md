@@ -1,14 +1,11 @@
 # Medical-imaging-system-datalogger-real-time-data-processing-and-analysis-using-spark-kafka
 
-# IOT-Real-time-data-processing-and-analysis-using-Apache-spark-kafka
-
-
-<img src="medical_imaging_pipeline.png" alt="Project Pipeline" width="1500" height="300">
+<img src="medical_imaging_pipeline.png" alt="Project Pipeline" width="1500" height="400">
 
 
 # 1. Overview
 ## Usecase
-- Analyzing temperature from IoT sensors in real-time
+- Analyzing temperature from IoT sensors in real-time humidity from data loggers in real time 
 
 ## Project scenario
 - Multiple temperature sensors are deployed in multiple district
