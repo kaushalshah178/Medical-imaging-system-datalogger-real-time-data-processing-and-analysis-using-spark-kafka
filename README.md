@@ -40,23 +40,21 @@
 ```
 In this project, I achieved 4 types of real-time analysis.
 
-(i) Average temperature by each state (Values sorted in descending order)
+(i) Average humidity by each medicalimagingdevice (Values sorted in descending order)
 (ii)Total messages processed
-(iii) Number of sensors by each state (Keys sorted in ascending order)
+(iii) Number of humidity sensors by each state (Keys sorted in ascending order)
 (iv) Total number of sensors
 
 ```
 ## (i) Average humidity by each medicalImagingdevice (Values sorted in descending order)
 
-```python
-avgTempByState = jsonRDD.map(lambda x: (x['state'], (x['payload']['data']['temperature'], 1))) \ #CA,59.7,1 
-                       #CA,61.6,1
-                 .reduceByKey(lambda x,y: (x[0]+y[0], x[1]+y[1])) \ #CA, 121.3,2
-                 .map(lambda x: (x[0], x[1][0]/x[1][1])) #CA,60.65
-                                                         #WY,55.5
-sortedTemp = avgTempByState.transform(lambda x: x.sortBy(lambda y: y[1], False))
-#WY,55.5
-#CA,60.65
+```
+avgHumidityByState = jsonRDD.map(lambda x: (x['medicalimagingdevice'], (x['payload']['data']['humidity'], 1))) \
+             .reduceByKey(lambda a,b: (a[0]+b[0], a[1]+b[1])) \
+             .map(lambda x: (x[0], x[1][0]/x[1][1])) 
+sortedHumidity = avgHumidityByState.transform(lambda x: x.sortBy(lambda y: y[1], False))
+sortedHumidity.pprint(num=100000)
+
 ```
 
 {
@@ -72,170 +70,36 @@ sortedTemp = avgTempByState.transform(lambda x: x.sortBy(lambda y: y[1], False))
     }
 }
 
-- In the first ```.map``` operation, PySpark creates pair RDDs (k, v) where _k_ is a values of a fileld ```state```, and _v_ is a value of a field ```temperature``` with a count of 1
-
-```
-<Example>
-
-('StateA', (50.0, 1))
-('StateB', (20.0, 1))
-('StateB', (21.0, 1))
-('StateC', (70.0, 1))
-('StateA', (52.0, 1))
-('StateB', (22.0, 1))
-...
-```
-
-- In the next ```.reduceByKey``` operation, PySpark aggregates the values by a same key and reduce them to a single entry  
-
-```
-<Example>
-
-('StateA', (102.0, 2))  
-('StateB', (63.0, 3))  
-('StateC', (70.0, 1))  
-...
-```
-
-- In the next ```.map``` operation, PySpark calculates the average temperature by deviding the sum of ```temperature``` by the total count  
-
-```
-<Example>
-
-('StateA', 51.0)
-('StateB', 21.0)
-('StateC', 70.0)
-...
-```
-
-- Finally, PySpark sorts the value of average temperature in descending order  
-
-```
-<Example>
-
-('StateC', 70.0)
-('StateA', 51.0)
-('StateB', 21.0)
-...
-```
-
 ## (ii) Total messages processed
-
-```python
+```
+# total number of messages
 messageCount = jsonRDD.map(lambda x: 1) \
                      .reduce(add) \
-                     .map(lambda x: "Total count of messages: "+ unicode(x))
+                     .map(lambda x: "Total number of messages: "+ unicode(x))
+messageCount.pprint()
 ```
-
-- Simply appends a count 1 to each entry, and then sums them up
-
 ## (iii) Number of sensors by each state (Keys sorted in ascending order)
 
-
-
-```python
-numSensorsByState = jsonRDD.map(lambda x: (x['state'] + ":" + x['guid'], 1)) \
-                        .reduceByKey(lambda a,b: a*b) \
-                        .map(lambda x: (re.sub(r":.*", "", x[0]), x[1])) \
-                        .reduceByKey(lambda a,b: a+b)
-sortedSensorCount = numSensorsByState.transform(lambda x: x.sortBy(lambda y: y[0], True))
 ```
-
-- In the first ```.map``` operation, PySpark creates pair RDDs (k, v) where _k_ is a value of fields ```state``` and ```guid``` concatenated with  ":", and _v_ is a value of count 1  
-
-CA:0-ZZZ12345678-08K,1
+# Number of humidity sensor at hospitals and imaging center
+numSensorsBymedicaldevice = jsonRDD.map(lambda x: (x['medicalimagingdevice'] + ":" + x['guid'], 1)) \
+                    .reduceByKey(lambda a,b: a*b) \
+                    .map(lambda x: (re.sub(r":.*", "", x[0]), x[1])) \
+                    .reduceByKey(lambda a,b: a+b)
+sortedSensorCount = numSensorsBymedicaldevice.transform(lambda x: x.sortBy(lambda y: y[0], True))
+sortedSensorCount.pprint(num=10000)
 ```
-<Example>
-
-('StateB:0-ZZZ12345678-28F', 1)
-('StateB:0-ZZZ12345678-30P', 1)
-('StateA:0-ZZZ12345678-08K', 1)
-('StateC:0-ZZZ12345678-60F', 1)
-('StateA:0-ZZZ12345678-08K', 1)
-('StateB:0-ZZZ12345678-30P', 1)
-('StateB:0-ZZZ12345678-28F', 1)
-('StateB:0-ZZZ12345678-28F', 1)
-
-...
-```
-
-- In the next ```.reduceByKey``` operation, PySpark aggregates the values by a same key and reduce them to a single entry but the values stay 1  
-
-```
-('StateB:0-ZZZ12345678-28F', 1)
-('StateB:0-ZZZ12345678-30P', 1)
-('StateA:0-ZZZ12345678-08K', 1)
-('StateC:0-ZZZ12345678-60F', 1)
-...
-```
-
-- In the next ```.map``` operation, PySpark removes characters of ":" and guid
-
-```
-<Example>
-
-('StateB', 1)
-('StateB', 1)
-('StateA', 1)
-('StateC', 1)
-...
-```
-
-- In the last ```.reduceByKey``` operation, PySpark aggregates the values by a same key and reduce them to a single entry  
-
-```
-<Example
-
-('StateB', 2)
-('StateA', 1)
-('StateC', 1)
-...
-```
-
-- Finally, PySpark sorts the values in ascending order  
-
-```
-<Example>
-
-('StateA', 1)
-('StateB', 2)
-('StateC', 1)
-...
-```
-
 ## (iv) Total number of sensors
+```
 
-```python
+# total number of devices
 sensorCount = jsonRDD.map(lambda x: (x['guid'], 1)) \
                      .reduceByKey(lambda a,b: a*b) \
+                     .map(lambda x: 1) \
                      .reduce(add) \
-                     .map(lambda x: "Total count of sensors: " + unicode(x))
-```
+                     .map(lambda x: "Total number of sensors: " + unicode(x))
+sensorCount.pprint(num=10000)
 
-- In the first ```.map``` operation, PySpark creates pair RDDs (k, v) where _k_ is a value of a field ```guid```, and _v_ is a count of 1
-
-```
-<Example>
-
-('0-ZZZ12345678-08K', 1)
-('0-ZZZ12345678-28F', 1)
-('0-ZZZ12345678-30P', 1)
-('0-ZZZ12345678-60F', 1)
-('0-ZZZ12345678-08K', 1)
-('0-ZZZ12345678-30P', 1)
-...
-```
-
-- In the next ```.reduceByKey``` operation, PySpark aggregates the values by a same key and reduce them to a single entry but the values stay 1  
-
-```
-<Example>
-
-('0-ZZZ12345678-08K', 1)
-('0-ZZZ12345678-28F', 1)
-('0-ZZZ12345678-30P', 1)
-('0-ZZZ12345678-60F', 1)
-...
 ```
 
 # 4. Results
@@ -264,57 +128,58 @@ Time: 2022-07-30 01:09:12
 -------------------------------------------
 Time: 2022-07-30 01:09:15   <- Average temperature by each state (Values sorted in descending order)
 -------------------------------------------
-(u'FL', 70.70635838150288)
-(u'HI', 70.59879999999998)
-(u'LA', 67.0132911392405)
-(u'TX', 64.63165467625899)
-(u'GA', 64.22095808383233)
-(u'AL', 63.29540229885056)
-(u'MS', 62.92658730158729)
-(u'SC', 62.889361702127644)
-(u'AZ', 61.161951219512204)
-(u'AR', 60.006074766355134)
-(u'CA', 59.56944444444444)
-(u'NC', 59.13968253968251)
-(u'OK', 59.10108108108111)
-(u'DC', 57.916810344827596)
-(u'TN', 57.18434782608696)
-(u'KY', 56.375510204081664)
-(u'DE', 54.6767634854772)
-(u'VA', 54.5506726457399)
-(u'MD', 54.30196078431374)
-(u'KS', 53.60306748466258)
-(u'MO', 53.59634146341466)
-(u'NM', 53.55384615384617)
-(u'NJ', 52.90479452054793)
-(u'IN', 52.55497382198954)
-(u'IL', 51.9223958333333)
-(u'WV', 51.89952380952379)
-(u'OH', 50.52346368715085)
-(u'NV', 50.38380281690144)
-(u'RI', 49.90240963855423)
-(u'PA', 49.61223404255321)
-(u'UT', 49.00546448087432)
-(u'CT', 48.47242990654204)
-(u'NE', 47.96193548387097)
-(u'OR', 47.908675799086716)
-(u'WA', 47.88577777777777)
-(u'MA', 47.81961722488036)
-(u'IA', 47.54875621890548)
-(u'SD', 45.449999999999996)
-(u'CO', 45.16935483870966)
-(u'NY', 44.81830985915495)
-(u'MI', 44.58102564102565)
-(u'ID', 44.56483050847461)
-(u'NH', 43.39304347826085)
-(u'MT', 43.05155709342561)
-(u'WY', 42.9689655172414)
-(u'VT', 42.668322981366465)
-(u'WI', 41.81523809523809)
-(u'ME', 41.695061728395046)
-(u'MN', 40.348076923076924)
-(u'ND', 40.23502538071064)
-(u'AK', 26.85450819672129)
+-------------------------------------------
+(u'PETCT7', 70.81361502347417)
+(u'PETCT6', 69.25660377358493)
+(u'CT1', 66.64378698224857)
+(u'PETCT12', 64.06748768472902)
+(u'MRI5', 63.5295081967213)
+(u'MRI1', 63.48599033816421)
+(u'LINAC3', 63.39398907103824)
+(u'LINAC4', 62.46274509803922)
+(u'MRI2', 60.574556213017765)
+(u'MRI9', 60.19908675799086)
+(u'CT8', 60.11951219512194)
+(u'MRI8', 58.97126436781611)
+(u'CT2', 58.962244897959174)
+(u'PETCT3', 58.865938864628845)
+(u'CT5', 57.83787878787876)
+(u'LINAC5', 55.43532934131735)
+(u'PETCT2', 55.31930693069307)
+(u'SPECT5', 54.994054054054075)
+(u'SPECT1', 54.88229665071771)
+(u'LINAC1', 54.54745762711863)
+(u'CT10', 54.231004366812265)
+(u'PETCT10', 53.14876543209874)
+(u'MRI6', 53.04600000000002)
+(u'PETCT11', 52.86069364161848)
+(u'PETCT5', 51.927272727272744)
+(u'MRI4', 51.76022727272727)
+(u'SPECT8', 50.2936585365854)
+(u'SPECT3', 50.092156862745156)
+(u'CT9', 49.874400000000016)
+(u'CT7', 49.11515151515152)
+(u'CT4', 49.101863354037285)
+(u'LINAC6', 48.6443181818182)
+(u'MRI11', 48.435555555555545)
+(u'SPECT4', 48.19802955665024)
+(u'PETCT1', 47.87729729729728)
+(u'SPECT2', 47.76611570247935)
+(u'MRI7', 47.41428571428573)
+(u'LINAC7', 45.2108225108225)
+(u'SPECT7', 45.19899497487435)
+(u'CT11', 44.707798165137646)
+(u'CT6', 44.5754010695187)
+(u'MRI10', 44.08815789473686)
+(u'PETCT9', 43.603720930232555)
+(u'PETCT4', 43.05329341317365)
+(u'LINAC2', 42.77888888888891)
+(u'MRI3', 42.27473684210525)
+(u'PETCT8', 42.23756097560975)
+(u'MRI12', 41.05793650793651)
+(u'CT3', 40.38625592417063)
+(u'SPECT6', 40.189839572192476)
+(u'CT12', 26.311282051282056)
 
 -------------------------------------------
 Time: 2022-07-30 01:09:18 <- Total messages processed
@@ -322,59 +187,59 @@ Time: 2022-07-30 01:09:18 <- Total messages processed
 Total number of messages: 10000
 
 -------------------------------------------
-Time: 2022-07-30 01:09:21 <- Number of sensors by each state (Keys sorted in ascending order)
+Time: 2022-07-30 01:09:21 <- Number of humidity sensors at hospital and imaging center (Keys sorted in ascending order)
 -------------------------------------------
-(u'AK', 53)
-(u'AL', 34)
-(u'AR', 47)
-(u'AZ', 40)
-(u'CA', 28)
-(u'CO', 37)
-(u'CT', 41)
-(u'DC', 44)
-(u'DE', 50)
-(u'FL', 39)
-(u'GA', 34)
-(u'HI', 50)
-(u'IA', 45)
-(u'ID', 41)
-(u'IL', 42)
-(u'IN', 41)
-(u'KS', 35)
-(u'KY', 42)
-(u'LA', 36)
-(u'MA', 44)
-(u'MD', 43)
-(u'ME', 38)
-(u'MI', 41)
-(u'MN', 42)
-(u'MO', 50)
-(u'MS', 50)
-(u'MT', 57)
-(u'NC', 41)
-(u'ND', 40)
-(u'NE', 33)
-(u'NH', 41)
-(u'NJ', 34)
-(u'NM', 37)
-(u'NV', 30)
-(u'NY', 26)
-(u'OH', 42)
-(u'OK', 36)
-(u'OR', 47)
-(u'PA', 41)
-(u'RI', 32)
-(u'SC', 39)
-(u'SD', 39)
-(u'TN', 53)
-(u'TX', 34)
-(u'UT', 36)
-(u'VA', 45)
-(u'VT', 38)
-(u'WA', 45)
-(u'WI', 47)
-(u'WV', 44)
-(u'WY', 42)
+(u'CT1', 36)
+(u'CT10', 48)
+(u'CT11', 42)
+(u'CT12', 40)
+(u'CT2', 39)
+(u'CT3', 42)
+(u'CT4', 35)
+(u'CT5', 29)
+(u'CT6', 39)
+(u'CT7', 37)
+(u'CT8', 49)
+(u'CT9', 51)
+(u'LINAC1', 38)
+(u'LINAC2', 41)
+(u'LINAC3', 37)
+(u'LINAC4', 41)
+(u'LINAC5', 37)
+(u'LINAC6', 37)
+(u'LINAC7', 48)
+(u'MRI1', 41)
+(u'MRI10', 43)
+(u'MRI11', 35)
+(u'MRI12', 50)
+(u'MRI2', 38)
+(u'MRI3', 44)
+(u'MRI4', 43)
+(u'MRI5', 36)
+(u'MRI6', 36)
+(u'MRI7', 40)
+(u'MRI8', 40)
+(u'MRI9', 43)
+(u'PETCT1', 37)
+(u'PETCT10', 34)
+(u'PETCT11', 37)
+(u'PETCT12', 46)
+(u'PETCT2', 45)
+(u'PETCT3', 48)
+(u'PETCT4', 33)
+(u'PETCT5', 43)
+(u'PETCT6', 37)
+(u'PETCT7', 43)
+(u'PETCT8', 44)
+(u'PETCT9', 46)
+(u'SPECT1', 45)
+(u'SPECT2', 48)
+(u'SPECT3', 41)
+(u'SPECT4', 39)
+(u'SPECT5', 40)
+(u'SPECT6', 40)
+(u'SPECT7', 40)
+(u'SPECT8', 39)
 
 -------------------------------------------
 Time: 2022-07-30 01:09:15  <- Total number of sensors
@@ -388,7 +253,7 @@ Total number of sensors: 2086
 ## Step 1 - creating kafka topic
 ```
 /usr/hdp/current/kafka-broker/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic humidityanalytics
-checking topic is created 
+# checking topic is created 
 /usr/hdp/current/kafka-broker/bin/kafka-topics.sh --list --zookeeper localhost:2181
 ```
 ## Step 2 - Starting spark shell
