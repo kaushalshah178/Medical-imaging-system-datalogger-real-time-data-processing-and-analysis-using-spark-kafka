@@ -44,7 +44,7 @@ In this project, I achieved 4 types of real-time analysis.
 (ii)Total messages processed
 (iii) Number of humidity sensors by each state (Keys sorted in ascending order)
 (iv) Total number of sensors
-
+(v) Filtering out medical imaging device which have humidity above 80
 ```
 ## (i) Average humidity by each medicalImagingdevice (Values sorted in descending order)
 
@@ -187,7 +187,7 @@ Time: 2022-07-30 01:09:18 <- Total messages processed
 Total number of messages: 10000
 
 -------------------------------------------
-Time: 2022-07-30 01:09:21 <- Number of humidity sensors at hospital and imaging center (Keys sorted in ascending order)
+Time: 2022-07-30 01:09:21 
 -------------------------------------------
 (u'CT1', 36)
 (u'CT10', 48)
@@ -246,7 +246,16 @@ Time: 2022-07-30 01:09:15  <- Total number of sensors
 -------------------------------------------
 Total number of sensors: 2086
 
+(u'PETCT7', 90.81361502347417)  <- This imaging device need dehumidifier at immediate bases to prevent critical damage
+(u'PETCT6', 89.25660377358493)
+(u'CT1', 86.64378698224857)
+(u'PETCT12', 84.06748768472902)
+(u'MRI5', 83.5295081967213)
+(u'MRI1', 83.48599033816421)
+(u'LINAC3', 83.39398907103824)
+
 ```
+
 
 # Steps
 
